@@ -1,108 +1,37 @@
 from django.core.validators import MinLengthValidator
 from django.db import models
+from projects.enums import STATUSES_CHOICES
+from projects.enums import PRIORITY_CHOICES
+from django.contrib.auth.models import  User
 
 
 class Task(models.Model):
-
-    class Status(models.IntegerChoices):
-        new = 1,"New"
-        in_progress = 2,"In progress"
-        done = 3,"Done"
-        cancelled = 4,"Cancelled"
-
-    class Priority(models.IntegerChoices):
-        low = 1,"Low"
-        medium = 2,"Medium"
-        high = 3,"High"
-        critical = 4,"Critical"
-
-
-    name = models.CharField(
-        max_length=100,
-        unique=True,
-        validators=[MinLengthValidator(10)],
-        verbose_name="Название задачи",
-        null=True,
-        blank=True,
-    )
-
-    description = models.TextField(
-        blank=True,
-        null=True,
-        verbose_name="Описание"
-    )
-
-    status = models.PositiveSmallIntegerField(
-        choices=Status,
-        default=Status.new,
-        verbose_name="Статус"
-    )
-
-    priority = models.PositiveSmallIntegerField(
-        choices=Priority,
-        verbose_name="Приоритет",
-        default=Priority.low,
-    )
-
+    name = models.CharField(max_length=50, validators=[MinLengthValidator(10)])
+    description = models.TextField(max_length=200, null=True, blank=True)
+    status = models.CharField(max_length=15, choices=STATUSES_CHOICES)
+    priority = models.CharField(max_length=15, choices=PRIORITY_CHOICES)
     project = models.ForeignKey(
         "Project",
-        related_name="tasks",
         on_delete=models.CASCADE,
-        verbose_name="Проект",
-        null=True,
-        blank=True,
-    )
-
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name="Дата создания",
-        null=True,
-        blank=True,
-    )
-
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name="Дата обновления",
-        null=True,
-        blank=True,
-    )
-
-    deleted_at = models.DateTimeField(
-        blank=True,
-        null=True,
-        verbose_name="Дата удаления"
-    )
-
-    due_date = models.DateTimeField(
-        blank=True,
-        null=True,
-    )
-
-    tags = models.ManyToManyField(
-        "Tag",
-        blank=True,
         related_name="tasks"
     )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
+    deleted_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    due_date = models.DateTimeField()
+
+    tags = models.ManyToManyField('Tag', blank=True, related_name='tasks')
+
     assignee = models.ForeignKey(
-        'User',
+        User,
         on_delete=models.SET_NULL,
-        related_name='assignee_tasks',
+        null=True,
         blank=True,
-        null=True
+        related_name="tasks",
+
     )
 
-    created_by = models.ForeignKey(
-        'User',
-        on_delete=models.SET_NULL,
-        related_name='creator_tasks',
-        blank=True,
-        null=True
-    )
+    def __str__(self):
+        return self.name
 
 
-    class Meta:
-        db_table = "tasks"
-        ordering = ['-due_date', "assignee"]
-        verbose_name = "task"
-        verbose_name_plural = "tasks"
-        unique_together = ("name", "project")
