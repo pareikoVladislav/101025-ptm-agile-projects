@@ -7,5 +7,11 @@ class Project(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     #created_at = models.DateTimeField(default=timezone.now())
 
+    class Meta:
+        ordering = ("-name",)
+        verbose_name = "Project"
+        verbose_name_plural = "Project"
+        unique_together = ("name","description")
+
     def __str__(self):
         return self.name
